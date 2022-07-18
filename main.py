@@ -2,7 +2,7 @@ import pytest
 import requests
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel, ValidationError, validator, Field
 
 
 
@@ -19,7 +19,7 @@ class ResultStructure(BaseModel):
     author_name: str
     comments: int
     created_date: datetime
-    text: int
+    text: str
     pic: str
     likes: int
     current_user_rate: int
@@ -31,8 +31,6 @@ class ResultStructure(BaseModel):
         return pk
 
 
-
-
 class Post(BaseModel):
     count: int
     next: str
@@ -40,10 +38,22 @@ class Post(BaseModel):
     results: List[ResultStructure]
 
 
+class Comments(BaseModel):
+    post: int
+    comment_id: int
+    user: int
+    username: int
+    date_of_comment: datetime
+    text: str
+    parent_comment: Optional[int]
+
+
 try:
-    response = requests.get('https://meme.gcqadev.ru/api/v2/post_list/')
-    parsed = Post.parse_obj(response.json())
+    comments = requests.get('https://meme.gcqadev.ru/api/v1/post/70/comments/', headers=headers)
+    Comments.parse_obj(comments.json()[0])
 except ValidationError as e:
     print(e)
 
 
+comments = requests.get('https://meme.gcqadev.ru/api/v1/post/70/comments/', headers=headers)
+Comments.parse_obj(comments.json()[0])
