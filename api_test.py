@@ -1,7 +1,9 @@
 import pytest
 import requests
 import json
-from pydantic import BaseModel
+from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel, ValidationError, validator
 
 headers = {
   'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6NDIsImV4cCI6MTY2MjcwOTc4NSwiY3JlYXRlZCI6MTY1NzU'
@@ -10,21 +12,38 @@ headers = {
 }
 
 
-class Post(BaseModel):
-    pk: int
+class ResultStructure(BaseModel):
+    pk: str
     author: int
     author_name: str
     comments: int
-    created_date: str
+    created_date: datetime
     text: str
     pic: str
     likes: int
     current_user_rate: int
 
+    @validator('pk')
+    def integer_check(cls, pk):
+        if not str(pk).isdigit():
+            raise ValueError('PK must be integer!!')
+        return pk
+
+
+class Post(BaseModel):
+    count: int
+    next: str
+    previous: Optional[str]
+    results: List[ResultStructure]
+
 
 def test_post_list():
-    response = requests.get('https://meme.gcqadev.ru/api/v2/post_list/')
-    assert Post.parse_obj(response.json()['results'][0])
+    try:
+        response = requests.get('https://meme.gcqadev.ru/api/v2/post_list/')
+        assert response.status_code == 200
+        parsed = Post.parse_obj(response.json())
+    except ValidationError as e:
+        raise ValueError(e.json())
 
 
 def test_post_list_by_tag():
