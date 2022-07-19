@@ -13,7 +13,7 @@ headers = {
 
 
 class ResultStructure(BaseModel):
-    pk: str
+    pk: int
     author: int
     author_name: str
     comments: int
@@ -23,11 +23,11 @@ class ResultStructure(BaseModel):
     likes: int
     current_user_rate: int
 
-    @validator('pk')
-    def integer_check(cls, pk):
-        if not str(pk).isdigit():
-            raise ValueError('PK must be integer!!')
-        return pk
+    @validator('pk', 'author', 'comments', 'likes', 'current_user_rate')
+    def integer_check(cls, v):
+        if not str(v).isdigit():
+            raise ValueError('Value must be an integer!')
+        return v
 
 
 class Post(BaseModel):
@@ -36,15 +36,44 @@ class Post(BaseModel):
     previous: Optional[str]
     results: List[ResultStructure]
 
+    @validator('count')
+    def integer_check(cls, count):
+        if not str(count).isdigit():
+            raise ValueError('PK must be an integer!')
+        return count
+
+
+class Comments(BaseModel):
+    post: int
+    comment_id: int
+    user: int
+    username: str
+    date_of_comment: datetime
+    text: str
+    parent_comment: Optional[str]
+
+    @validator('post', 'comment_id', 'user')
+    def integer_check(cls, v):
+        if not str(v).isdigit():
+            raise ValueError('Value must be an integer!')
+        return v
+
 
 def test_post_list():
     try:
         response = requests.get('https://meme.gcqadev.ru/api/v2/post_list/')
         assert response.status_code == 200
-        parsed = Post.parse_obj(response.json())
+        Post.parse_obj(response.json())
+    except ValidationError as e:
+        raise ValueError(e)
+
+
+def test_comment_list():
+    try:
+        comments = requests.get('https://meme.gcqadev.ru/api/v1/post/70/comments/', headers=headers)
+        Comments.parse_obj(comments.json()[0])
     except ValidationError as e:
         raise ValueError(e.json())
-
 
 def test_post_list_by_tag():
     tag = 'family'
