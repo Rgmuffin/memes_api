@@ -18,7 +18,7 @@ def city_search (used_list, letter):
         for line in cities_list.readlines():
             if line[:-1:] not in used_list:
                 if line[0] == letter.upper():
-                    city = line
+                    city = line.strip()
                     break
     return city
 
@@ -28,8 +28,8 @@ option.add_argument('--user-data-dir=C:\\Users\\artem.rakhmatullin\\AppData\\Loc
 option.add_argument('--profile-directory=Profile 1')
 
 driver = webdriver.Chrome(options=option)
-#driver.get('https://vk.com/club214769465')
-driver.get('https://vk.com/public214787090')
+driver.get('https://vk.com/club214769465')
+#driver.get('https://vk.com/public214787090')
 
 #Жмем кнопку перехода к чату
 club_chat = driver.find_element(By.XPATH, '//*[@id="groups_chats"]/div[2]/div/div/div[1]/a')
@@ -74,27 +74,28 @@ while search_msg:
     print('tick')
     messages = driver.find_elements(By.CSS_SELECTOR, '.im-page--chat-body-wrap-inner._im_peer_history_w .im-mess-stack._im_mess_stack .im-mess--text.wall_module._im_log_body')
     start_time = datetime.now()
-    while last_msg == messages[-1].text:
-        new_msg_time = datetime.now()
-        if new_msg_time.second - start_time.second >=3:
-            input_field = driver.find_element(By.CSS_SELECTOR, '.im_editable.im-chat-input--text._im_text')
-            input_field.send_keys('никто не пишет (')
-            driver.implicitly_wait(1)
-            send_msg = driver.find_element(By.XPATH,
-                                           '//*[@id="content"]/div/div[1]/div[3]/div[2]/div[4]/div[2]/div[4]/div[1]/button/span[2]')
-            send_msg.click()
-            break
+    msg_time = datetime.now()
+    splited = messages[-1].text.split('.')
+    print(splited)
+    print(splited[0])
+    print(used_cities)
+    if splited[0] not in used_cities:
+        used_cities.append(splited[0])
+
 
     if last_msg != messages[-1].text:
         print('curr mess ', messages[-1].text)
         if my_username in messages[-1].text:
             msg = messages[-1].text
+            print(msg.split())
             if 'Старт' in msg:
                 count_users = len(users_list)
                 x = random.randint(0,(count_users)-1)
                 city_start = 'Урюпинск'
+                used_cities.append(city_start)
                 input_field = driver.find_element(By.CSS_SELECTOR, '.im_editable.im-chat-input--text._im_text')
-                input_field.send_keys(f'{city_start}, {users_list[x]} тебе на {city_start[-1]}')
+                choised_user = users_list[x]
+                input_field.send_keys(f'{city_start}, @id471672657 тебе на {city_start[-1]}')
                 driver.implicitly_wait(1)
                 send_msg = driver.find_element(By.XPATH, '//*[@id="content"]/div/div[1]/div[3]/div[2]/div[4]/div[2]/div[4]/div[1]/button/span[2]')
                 send_msg.click()
@@ -105,16 +106,28 @@ while search_msg:
                 x = random.randint(0,(count_users)-1)
                 input_field = driver.find_element(By.CSS_SELECTOR, '.im_editable.im-chat-input--text._im_text')
                 city = city_search(used_cities, last_letter)
+                used_cities.append(city)
                 print('city', city)
                 if len(city) > 0:
-                    input_field.send_keys(f'{city[:-1:]}, {users_list[x]} тебе на {city[-2]}')
+                    input_field.send_keys(f'{city}. @id471672657  тебе на {city[-1]}')
                     driver.implicitly_wait(1)
                     send_msg = driver.find_element(By.XPATH, '//*[@id="content"]/div/div[1]/div[3]/div[2]/div[4]/div[2]/div[4]/div[1]/button/span[2]')
                     send_msg.click()
+                    msg_time = datetime.now()
+                else:
+                    input_field.send_keys(f'Москва. @id471672657  тебе на А')
+                    driver.implicitly_wait(1)
+                    send_msg = driver.find_element(By.XPATH, '//*[@id="content"]/div/div[1]/div[3]/div[2]/div[4]/div[2]/div[4]/div[1]/button/span[2]')
+                    send_msg.click()
+                    msg_time = datetime.now()
+
         last_msg = messages[-1].text
         print('last_msg', last_msg)
-    else:
-        pass
+        print(used_cities)
+
+
+
+
 
 
 
